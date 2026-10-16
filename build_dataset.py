@@ -29,7 +29,8 @@ import json
 import statistics
 import sys
 import urllib.request
-from collections import defaultdict
+from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -63,18 +64,14 @@ def download(url: str) -> str:
 
 def data_rows(text: str):
     """Restituisce (data di estrazione, righe dopo l'intestazione 'idImpianto|...')."""
+    lines = text.splitlines()
     extraction = None
-    rows = []
-    header_found = False
-    for line in text.splitlines():
-        if header_found:
-            if line.strip():
-                rows.append(line)
-        elif line.startswith("Estrazione del"):
+    for i, line in enumerate(lines):
+        if line.startswith("Estrazione del"):
             extraction = line.removeprefix("Estrazione del").strip()
         elif line.startswith("idImpianto"):
-            header_found = True
-    return extraction, rows
+            return extraction, [row for row in lines[i + 1:] if row.strip()]
+    return extraction, []
 
 
 def clean(value: str) -> str:
@@ -90,6 +87,7 @@ def to_float(value: str):
 
 
 def parse_stations(text: str) -> dict:
+    """Restituisce {id: riga S del formato di output}."""
     _, rows = data_rows(text)
     stations = {}
     for line in rows:
@@ -106,16 +104,12 @@ def parse_stations(text: str) -> dict:
             continue
         if not (LAT_RANGE[0] <= lat <= LAT_RANGE[1] and LON_RANGE[0] <= lon <= LON_RANGE[1]):
             continue
-        stations[station_id] = {
-            "brand": clean(f[2]),
-            # Campi in eccesso dovuti a '|' nel nome: i primi 4 e gli ultimi 5 sono fissi.
-            "name": clean(" ".join(f[4:n - 5])),
-            "address": clean(f[n - 5]),
-            "municipality": clean(f[n - 4]),
-            "province": clean(f[n - 3]),
-            "lat": lat,
-            "lon": lon,
-        }
+        # Campi in eccesso dovuti a '|' nel nome: i primi 4 e gli ultimi 5 sono fissi.
+        name = clean(" ".join(f[4:n - 5]))
+        address, municipality, province = (clean(v) for v in f[n - 5:n - 2])
+        stations[station_id] = (
+            f"S|{station_id}|{clean(f[2])}|{name}|{address}|{municipality}|{province}|{lat:.6f}|{lon:.6f}"
+        )
     return stations
 
 
@@ -124,7 +118,8 @@ def parse_prices(text: str, stations: dict, now: datetime):
     extraction, rows = data_rows(text)
     oldest = now - timedelta(days=MAX_PRICE_AGE_DAYS)
     candidates = []
-    stats = defaultdict(int)
+    by_fuel = defaultdict(list)
+    stats = Counter()
     for line in rows:
         f = line.split("|")
         if len(f) < 5:
@@ -152,15 +147,16 @@ def parse_prices(text: str, stations: dict, now: datetime):
             stats["stale"] += 1
             continue
         candidates.append((station_id, fuel, f[3].strip() == "1", price, date))
+        by_fuel[fuel].append(price)
 
-    medians = {
-        fuel: statistics.median(prices)
-        for fuel, prices in _group_prices(candidates).items()
-    }
+    bounds = {}
+    for fuel, fuel_prices in by_fuel.items():
+        median = statistics.median(fuel_prices)
+        bounds[fuel] = (MEDIAN_MIN_FACTOR * median, MEDIAN_MAX_FACTOR * median)
     best = {}
     for station_id, fuel, is_self, price, date in candidates:
-        median = medians[fuel]
-        if not (MEDIAN_MIN_FACTOR * median <= price <= MEDIAN_MAX_FACTOR * median):
+        low, high = bounds[fuel]
+        if not (low <= price <= high):
             stats["outlier"] += 1
             continue
         key = (station_id, fuel, is_self)
@@ -169,17 +165,13 @@ def parse_prices(text: str, stations: dict, now: datetime):
     return extraction, best, stats
 
 
-def _group_prices(candidates):
-    grouped = defaultdict(list)
-    for _, fuel, _, price, _ in candidates:
-        grouped[fuel].append(price)
-    return grouped
-
-
 def build(output_dir: Path) -> dict:
     now = datetime.now(ROME)
-    stations = parse_stations(download(STATIONS_URL))
-    extraction, prices, stats = parse_prices(download(PRICES_URL), stations, now)
+    # I due file sono indipendenti: scaricarli in parallelo dimezza l'attesa sul server MIMIT.
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        stations_text, prices_text = pool.map(download, (STATIONS_URL, PRICES_URL))
+    stations = parse_stations(stations_text)
+    extraction, prices, stats = parse_prices(prices_text, stations, now)
     if len(stations) < 10_000 or len(prices) < 20_000:
         # Protezione contro file MIMIT vuoti o troncati: meglio lasciare online il dataset precedente.
         raise SystemExit(f"Dataset sospetto: {len(stations)} impianti, {len(prices)} prezzi")
@@ -187,12 +179,7 @@ def build(output_dir: Path) -> dict:
     with_prices = {station_id for station_id, _, _ in prices}
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines = [f"#carburanti|{FORMAT_VERSION}|{extraction or ''}|{generated}"]
-    for station_id in sorted(with_prices):
-        s = stations[station_id]
-        lines.append(
-            f"S|{station_id}|{s['brand']}|{s['name']}|{s['address']}|{s['municipality']}|"
-            f"{s['province']}|{s['lat']:.6f}|{s['lon']:.6f}"
-        )
+    lines.extend(stations[station_id] for station_id in sorted(with_prices))
     for (station_id, fuel, is_self), (price, date) in sorted(prices.items()):
         lines.append(f"P|{station_id}|{fuel}|{int(is_self)}|{price:.3f}|{date:%d/%m/%Y}")
 
