@@ -3,7 +3,8 @@ name: Pubblica dataset carburanti
 on:
   schedule:
     # Il MIMIT pubblica i file del giorno in mattinata: più passaggi coprono eventuali ritardi.
-    - cron: "30 7,10,14 * * *"
+    # Minuto non tondo: a inizio e metà ora GitHub ritarda o salta più spesso i job programmati.
+    - cron: "17 7,10,14 * * *"
   workflow_dispatch:
 
 permissions:
