@@ -25,8 +25,10 @@ Il workflow `.github/workflows/publish.yml` gira tre volte al giorno e pubblica 
 
 1. Crea un repository GitHub con il contenuto di questa cartella.
 2. In *Settings › Pages* scegli **Source: GitHub Actions**.
-3. Avvia il workflow da *Actions › Pubblica dataset carburanti › Run workflow*.
-4. Il file sarà su `https://<utente>.github.io/<repository>/carburanti-v1.txt.gz`:
+3. Il MIMIT non risponde agli IP dei runner GitHub, quindi il download passa da una VPN WireGuard in Italia:
+   salva la configurazione (es. Proton VPN, server italiano, NetShield disattivato) nel secret `PROTON_WG_CONF`.
+4. Avvia il workflow da *Actions › Pubblica dataset carburanti › Run workflow*.
+5. Il file sarà su `https://<utente>.github.io/<repository>/carburanti-v1.txt.gz`:
    imposta questo URL in `fuelDataUrl` nel `gradle.properties` dell'app.
 
 ### Traffico e CDN

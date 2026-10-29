@@ -24,8 +24,24 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      # Il MIMIT non risponde agli IP dei runner GitHub: il download passa da una VPN in Italia.
+      - name: Avvia VPN
+        env:
+          WG_CONF: ${{ secrets.PROTON_WG_CONF }}
+        run: |
+          sudo apt-get install -y -qq wireguard-tools
+          # Senza resolvconf wg-quick non gestisce la riga DNS: il DNS della VPN si imposta con resolvectl.
+          printf '%s\n' "$WG_CONF" | sed '/^DNS/d' | sudo tee /etc/wireguard/wg0.conf > /dev/null
+          sudo chmod 600 /etc/wireguard/wg0.conf
+          sudo wg-quick up wg0
+          sudo resolvectl dns wg0 10.2.0.1
+          sudo resolvectl domain wg0 '~.'
+          echo "Paese di uscita: $(curl -sS --max-time 15 https://ipinfo.io/country || echo sconosciuto)"
       - name: Genera dataset
         run: python3 -I build_dataset.py public
+      - name: Chiudi VPN
+        if: always()
+        run: sudo wg-quick down wg0 || true
       - uses: actions/upload-pages-artifact@v5
         with:
           path: public
