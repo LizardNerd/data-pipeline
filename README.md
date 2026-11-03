@@ -22,6 +22,8 @@ python3 build_dataset.py public   # genera i file in public/
 ## Pubblicazione
 
 Il workflow `.github/workflows/publish.yml` gira tre volte al giorno e pubblica `public/` su GitHub Pages.
+Insieme al dataset pubblica le pagine statiche in `site/`, come l'informativa privacy dell'app
+(`https://<utente>.github.io/<repository>/privacy.html`).
 
 1. Crea un repository GitHub con il contenuto di questa cartella.
 2. In *Settings › Pages* scegli **Source: GitHub Actions**.

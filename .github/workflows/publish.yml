@@ -42,6 +42,9 @@ jobs:
       - name: Chiudi VPN
         if: always()
         run: sudo wg-quick down wg0 || true
+      # Pagine statiche dell'app (informativa privacy) servite accanto al dataset.
+      - name: Aggiungi pagine statiche
+        run: cp -r site/. public/
       - uses: actions/upload-pages-artifact@v5
         with:
           path: public
