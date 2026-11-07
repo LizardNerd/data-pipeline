@@ -1,4 +1,4 @@
-# Dataset carburanti per Gasolio Low Cost
+# Dataset carburanti per PompaSmart
 
 Pubblica ogni giorno un file statico con impianti e prezzi dei carburanti in Italia,
 ricavato dagli open data del MIMIT, che l'app Android scarica una volta al giorno.
