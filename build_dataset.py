@@ -198,6 +198,7 @@ def build(output_dir: Path) -> dict:
         "prices": len(prices),
         "discarded": dict(stats),
         "source": "MIMIT – Osservatorio prezzi carburanti (open data)",
+        "license": "Italian Open Data License 2.0 (IODL 2.0), https://www.dati.gov.it/iodl/2.0/ - titolare: Ministero delle Imprese e del Made in Italy",
         "credits": "Regole di pulizia da Prezzi Carburante di dstmrk, https://github.com/dstmrk/prezzi-carburante (MIT)",
     }
     (output_dir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n")

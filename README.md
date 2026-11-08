@@ -4,6 +4,10 @@ Pubblica ogni giorno un file statico con impianti e prezzi dei carburanti in Ita
 ricavato dagli open data del MIMIT, che l'app Android scarica una volta al giorno.
 
 - **Fonte dati:** [MIMIT – Carburanti, prezzi praticati e anagrafica degli impianti](https://www.mimit.gov.it/it/open-data/elenco-dataset/carburanti-prezzi-praticati-e-anagrafica-degli-impianti)
+- **Licenza dei dati:** [Italian Open Data License 2.0 (IODL 2.0)](https://www.dati.gov.it/iodl/2.0/), titolare il
+  Ministero delle Imprese e del Made in Italy. Il dataset pubblicato qui ne è una rielaborazione e resta soggetto alla
+  stessa licenza: chi lo riusa deve citare la fonte (MIMIT) e la licenza. I prezzi sono comunicati dai gestori e
+  possono contenere errori; il progetto non è affiliato al Ministero.
 - **Regole di pulizia:** riprese da [Prezzi Carburante](https://github.com/dstmrk/prezzi-carburante) di dstmrk (licenza MIT)
 
 ## Come funziona
