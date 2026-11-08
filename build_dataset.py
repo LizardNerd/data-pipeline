@@ -39,7 +39,8 @@ FORMAT_VERSION = 1
 BASE_URL = "https://www.mimit.gov.it/images/exportCSV/"
 STATIONS_URL = BASE_URL + "anagrafica_impianti_attivi.csv"
 PRICES_URL = BASE_URL + "prezzo_alle_8.csv"
-USER_AGENT = "PompaSmart-dataset/1.0 (+https://github.com/dstmrk/prezzi-carburante)"
+# Contatti di chi scarica i dati: il repository della pipeline e l'email dell'app.
+USER_AGENT = "PompaSmart-dataset/1.0 (+https://github.com/LizardNerd/data-pipeline; trophylandgamer@gmail.com)"
 
 ROME = ZoneInfo("Europe/Rome")
 MAX_PRICE_AGE_DAYS = 15
