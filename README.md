@@ -21,7 +21,7 @@ python3 build_dataset.py public   # genera i file in public/
 
 ## Pubblicazione
 
-Il workflow `.github/workflows/publish.yml` gira tre volte al giorno e pubblica `public/` su GitHub Pages.
+Il workflow `.github/workflows/publish.yml` gira ogni ora dalle 5 alle 18 UTC e pubblica `public/` su GitHub Pages.
 Insieme al dataset pubblica le pagine statiche in `site/`, come l'informativa privacy dell'app
 (`https://<utente>.github.io/<repository>/privacy.html`).
 
