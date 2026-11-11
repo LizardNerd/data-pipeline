@@ -3,9 +3,10 @@ name: Pubblica dataset carburanti
 on:
   schedule:
     # Il MIMIT pubblica i file del giorno in mattinata. GitHub ritarda o salta spesso i job programmati,
-    # quindi si prova ogni ora dalle 5 alle 18 UTC: basta che ne parta uno per avere il dato del giorno.
-    # Minuto non tondo: a inizio e metà ora GitHub ritarda o salta più spesso i job programmati.
-    - cron: "17 5-18 * * *"
+    # quindi si prova tre volte all'ora dalle 5 alle 18 UTC: basta che ne parta uno per avere il dato del giorno.
+    # A novembre 2026, con un solo tentativo all'ora, ne partivano circa due al giorno, il primo nel pomeriggio.
+    # Minuti non tondi: a inizio e metà ora GitHub ritarda o salta più spesso i job programmati.
+    - cron: "7,27,47 5-18 * * *"
   workflow_dispatch:
 
 permissions:
